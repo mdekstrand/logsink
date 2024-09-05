@@ -1,0 +1,12 @@
+[package]
+name = "log-roller"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+tokio = { version = "^1.40", features = ["full"] }
+bytes = "^1.7"
+
+serde = "^1.0"
+serde_json = "^1.0"
+rmp-serde = "^1.3"
