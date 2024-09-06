@@ -1,3 +1,6 @@
+mod console;
+mod formats;
+mod receivers;
 mod schema;
 
 #[tokio::main]
