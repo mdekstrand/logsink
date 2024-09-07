@@ -5,6 +5,7 @@ use tokio_util::codec::LinesCodecError;
 
 use crate::schema::LogMessage;
 
+mod fifo;
 mod ndjson;
 
 #[derive(Error, Debug)]

@@ -9,4 +9,6 @@ pub enum SetupError {
     XDGError(#[from] xdg::BaseDirectoriesError),
     #[error("setup IO error: {0}")]
     IO(#[from] io::Error),
+    #[error("setup Unix error: {0}")]
+    Unix(#[from] nix::Error),
 }
