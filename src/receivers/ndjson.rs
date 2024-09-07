@@ -9,9 +9,11 @@ use crate::schema::LogMessage;
 
 use super::LogRecvResult;
 
-pub fn parse_ndjson<'r, R: AsyncRead>(chan: R) -> impl Stream<Item = LogRecvResult> {
-    let chan = FramedRead::new(chan, LinesCodec::new());
-    chan.map(decode_json)
+pub fn parse_ndjson<C: AsyncRead + Send + Sync + Unpin>(
+    input: C,
+) -> impl Stream<Item = LogRecvResult> {
+    let input = FramedRead::new(input, LinesCodec::new());
+    return input.map(decode_json);
 }
 
 fn decode_json(line: Result<String, LinesCodecError>) -> LogRecvResult {

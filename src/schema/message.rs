@@ -1,10 +1,9 @@
 //! Core log message schema
 
-use std::borrow::Cow;
-
 use chrono::serde::ts_microseconds;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use smol_str::SmolStr;
 use uuid::Uuid;
 
 use super::level::PrimLogLevel;
@@ -21,10 +20,10 @@ pub struct LogMessage {
     pub timestamp: DateTime<Utc>,
     /// Logger name (dot-separated).
     #[serde(default)]
-    pub name: Option<String>,
+    pub name: Option<SmolStr>,
     /// A context or operation identifier.
     #[serde(default)]
-    pub context_id: Option<String>,
+    pub context_id: Option<SmolStr>,
     /// The host/process originating the log message.
     #[serde(default)]
     pub origin: Option<OriginRef>,
@@ -47,16 +46,16 @@ pub struct LogOrigin {
     pub origin_id: Option<Uuid>,
     /// Hostname originating the log message.
     #[serde(default)]
-    pub hostname: Option<String>,
+    pub hostname: Option<SmolStr>,
     /// Name of the process initiating the log message.
     #[serde(default)]
-    pub process_name: Option<String>,
+    pub process_name: Option<SmolStr>,
     /// ID of the process initiating the log message.
     #[serde(default)]
     pub process_id: Option<u32>,
     /// Name of the thread initiating the message.
     #[serde(default)]
-    pub thread_name: Option<String>,
+    pub thread_name: Option<SmolStr>,
     /// ID of the thread initiating the message.
     #[serde(default)]
     pub thread_id: Option<u32>,
