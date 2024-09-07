@@ -35,6 +35,10 @@ struct LogSinkCLI {
     /// create and open a FIFO to receive log events
     #[arg(long = "listen-fifo")]
     listen_fifo: bool,
+
+    /// fork and put the log writer in the background
+    #[arg(long = "background")]
+    background: bool,
 }
 
 fn main() -> Result<(), SetupError> {
