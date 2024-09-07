@@ -10,7 +10,9 @@ use std::path::PathBuf;
 use clap::Parser;
 use errors::SetupError;
 use paths::runtime_dir;
+use receivers::{fifo::open_fifo, suite::ReceiverSuite};
 use schema::level::LogLevel;
+use tokio::{sync::broadcast, task::JoinSet};
 
 /// Collect and save log events.
 #[derive(Parser, Debug)]
@@ -46,7 +48,30 @@ struct LogSinkCLI {
 // don't want to start up the Tokio runtime until *after* we fork.
 fn main() -> Result<(), SetupError> {
     let cli = LogSinkCLI::parse();
-    let work = runtime_dir()?;
+    cli.run()
+}
 
-    Ok(())
+impl LogSinkCLI {
+    fn run(&self) -> Result<(), SetupError> {
+        let work = runtime_dir()?;
+        let suite = self.open_suite()?;
+        Ok(())
+    }
+
+    fn open_suite(&self) -> Result<ReceiverSuite, SetupError> {
+        let work = runtime_dir()?;
+        let mut suite = ReceiverSuite::new();
+
+        if self.listen_fifo {
+            let (fifo_path, fifo) = open_fifo(&work)?;
+            suite.listen_fifo_ndjson(&fifo_path, fifo);
+        }
+
+        Ok(suite)
+    }
+
+    async fn pump_messages(&self, suite: ReceiverSuite) {
+        let (send, recv) = broadcast::channel(500);
+        let listen = suite.pump_messages(send);
+    }
 }

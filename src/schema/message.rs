@@ -6,13 +6,13 @@ use serde::{Deserialize, Serialize};
 use smol_str::SmolStr;
 use uuid::Uuid;
 
-use super::level::PrimLogLevel;
+use super::level::LogLevel;
 
 /// Core schema for log messages.
 #[derive(Serialize, Deserialize, Clone, Debug, Default)]
 pub struct LogMessage {
     /// Log level (see [super::LogLevel] for defined level numbers).
-    pub level: PrimLogLevel,
+    pub level: LogLevel,
     /// Timestamp at which the log message was created.
     ///
     /// This is serialized as an integer number of microseconds.

@@ -3,8 +3,9 @@
 use std::fmt;
 use std::str::FromStr;
 
-use parse_display::{Display, FromStr};
+use parse_display::FromStr;
 use serde::{Deserialize, Serialize};
+use smol_str::StrExt;
 use strum::{EnumIter, FromRepr, IntoEnumIterator};
 use thiserror::Error;
 
@@ -13,11 +14,9 @@ use thiserror::Error;
 pub struct LevelParseError;
 
 /// Named log levels.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, FromRepr, Display, FromStr,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, FromRepr, FromStr)]
 #[repr(u8)]
-#[display(style = "lowercase")]
+#[display(style = "UPPERCASE")]
 pub enum NamedLogLevel {
     Trace = 5,
     Debug5,
@@ -53,6 +52,19 @@ impl LogLevel {
             }
         }
         None
+    }
+
+    /// Get named level.
+    pub fn approx_named(&self) -> NamedLogLevel {
+        let mut level = NamedLogLevel::Trace;
+        for name in NamedLogLevel::iter() {
+            if name as u8 > self.level {
+                break;
+            } else {
+                level = name;
+            }
+        }
+        level
     }
 
     /// Get the primitive log level.
@@ -111,6 +123,77 @@ impl From<NamedLogLevel> for LogLevel {
     }
 }
 
+impl NamedLogLevel {
+    /// Get a short (3-character) name for the log level.
+    pub fn short(&self) -> &'static str {
+        match self {
+            NamedLogLevel::Trace => "TRC",
+            NamedLogLevel::Debug5 => "DB5",
+            NamedLogLevel::Debug4 => "DB4",
+            NamedLogLevel::Debug3 => "DB3",
+            NamedLogLevel::Debug2 => "DB2",
+            NamedLogLevel::Debug => "DBG",
+            NamedLogLevel::Info => "INF",
+            NamedLogLevel::Notice => "NTC",
+            NamedLogLevel::Warn => "WRN",
+            NamedLogLevel::Error => "ERR",
+            NamedLogLevel::Critical => "CRI",
+            NamedLogLevel::Fatal => "FTL",
+        }
+    }
+
+    /// Get a medium (4- or 5-character) name for the log level.
+    pub fn medium(&self) -> &'static str {
+        match self {
+            NamedLogLevel::Trace => "TRACE",
+            NamedLogLevel::Debug5 => "DBUG5",
+            NamedLogLevel::Debug4 => "DBUG4",
+            NamedLogLevel::Debug3 => "DBUG3",
+            NamedLogLevel::Debug2 => "DBUG2",
+            NamedLogLevel::Debug => "DEBUG",
+            NamedLogLevel::Info => "INFO ",
+            NamedLogLevel::Notice => "NOTIC",
+            NamedLogLevel::Warn => "WARN ",
+            NamedLogLevel::Error => "ERROR",
+            NamedLogLevel::Critical => "CRIT ",
+            NamedLogLevel::Fatal => "FATAL",
+        }
+    }
+
+    /// Get a full name for the log level.
+    pub fn full(&self) -> &'static str {
+        match self {
+            NamedLogLevel::Trace => "TRACE",
+            NamedLogLevel::Debug5 => "DEBUG5",
+            NamedLogLevel::Debug4 => "DEBUG4",
+            NamedLogLevel::Debug3 => "DEBUG3",
+            NamedLogLevel::Debug2 => "DEBUG2",
+            NamedLogLevel::Debug => "DEBUG",
+            NamedLogLevel::Info => "INFO",
+            NamedLogLevel::Notice => "NOTICE",
+            NamedLogLevel::Warn => "WARN",
+            NamedLogLevel::Error => "ERROR",
+            NamedLogLevel::Critical => "CRITICAL",
+            NamedLogLevel::Fatal => "FATAL",
+        }
+    }
+}
+
+impl fmt::Display for NamedLogLevel {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let txt = match f.width() {
+            Some(n) if n < 5 => self.short(),
+            Some(n) if n < 7 => self.medium(),
+            _ => self.full(),
+        };
+        if f.alternate() {
+            f.write_str(&txt.to_uppercase_smolstr())
+        } else {
+            f.write_str(txt)
+        }
+    }
+}
+
 #[test]
 fn test_parse_level() {
     assert_eq!(
@@ -147,4 +230,17 @@ fn test_level_named() {
 
     level = 5.into();
     assert_eq!(level.named(), Some(NamedLogLevel::Trace));
+}
+
+#[test]
+fn test_approx_level() {
+    let mut level = LogLevel::from(45);
+    assert_eq!(level.primitive(), 45);
+    assert_eq!(level.approx_named(), NamedLogLevel::Error);
+
+    level = 2.into();
+    assert_eq!(level.approx_named(), NamedLogLevel::Trace);
+
+    level = 100.into();
+    assert_eq!(level.approx_named(), NamedLogLevel::Fatal);
 }

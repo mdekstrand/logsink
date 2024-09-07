@@ -5,9 +5,11 @@ use tokio_util::codec::LinesCodecError;
 
 use crate::schema::LogMessage;
 
-mod fifo;
-mod ndjson;
+pub mod fifo;
+pub mod ndjson;
+pub mod suite;
 
+/// Error receiving log messages.
 #[derive(Error, Debug)]
 pub enum LogRecvError {
     #[error("receiver IO error: {0}")]
