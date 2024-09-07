@@ -46,9 +46,7 @@ struct LogSinkCLI {
 // don't want to start up the Tokio runtime until *after* we fork.
 fn main() -> Result<(), SetupError> {
     let cli = LogSinkCLI::parse();
+    let work = runtime_dir()?;
 
-    eprintln!("console level: {}", cli.console_level.primitive());
-    eprintln!("file level: {}", cli.file_level.primitive());
-    eprintln!("runtime directory: {:?}", runtime_dir()?);
     Ok(())
 }
