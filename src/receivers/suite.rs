@@ -6,6 +6,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use serde::Serialize;
+
 pub enum LogProtocol {
     NDJSON,
 }
@@ -15,14 +17,13 @@ pub enum LogProtocol {
 /// This is set up *before* forking when the process is run in the background.
 pub struct ReceiverSuite {
     pub(super) stdin_protocol: Option<LogProtocol>,
-    pub(super) fifo: Option<OpenReceiver<File>>,
+    pub(super) fifo: Option<ReceiverPath>,
 }
 
 /// An open receiver with a configured protocol.
-pub(super) struct OpenReceiver<R: 'static> {
-    pub(super) channel: R,
+pub(super) struct ReceiverPath {
     pub(super) protocol: LogProtocol,
-    pub(super) path: Option<PathBuf>,
+    pub(super) path: PathBuf,
 }
 
 impl ReceiverSuite {
@@ -40,13 +41,18 @@ impl ReceiverSuite {
     }
 
     /// Listen for NDJSON messages on an open FIFO.
-    pub fn listen_fifo_ndjson(&mut self, path: &Path, file: File) {
+    pub fn listen_fifo_ndjson(&mut self, path: &Path) {
         assert!(self.fifo.is_none());
-        self.fifo = Some(OpenReceiver {
-            channel: file,
+        self.fifo = Some(ReceiverPath {
             protocol: LogProtocol::NDJSON,
-            path: Some(path.to_path_buf()),
+            path: path.to_path_buf(),
         });
+    }
+
+    pub fn connection_info(&self) -> ConnectionInfo {
+        ConnectionInfo {
+            log_fifo: self.fifo.as_ref().map(|fifo| fifo.path.clone()),
+        }
     }
 
     /// Clean up the receiver suite, deleting opened files.
@@ -56,16 +62,12 @@ impl ReceiverSuite {
 
     /// Disable deletion (for parent process).
     pub fn drop_without_deleting(mut self) {
-        if let Some(fifo) = self.fifo.as_mut() {
-            fifo.path = None
-        }
+        self.fifo = None;
     }
 
     fn do_cleanup(&mut self) -> Result<(), io::Error> {
-        if let Some(fifo) = self.fifo.as_mut() {
-            if let Some(path) = fifo.path.take() {
-                fs::remove_file(&path)?;
-            }
+        if let Some(fifo) = self.fifo.take() {
+            fs::remove_file(&fifo.path)?;
         }
         Ok(())
     }
@@ -75,4 +77,10 @@ impl Drop for ReceiverSuite {
     fn drop(&mut self) {
         self.do_cleanup();
     }
+}
+
+/// Connection information to share with clients.
+#[derive(Debug, Serialize, Clone)]
+pub struct ConnectionInfo {
+    pub log_fifo: Option<PathBuf>,
 }

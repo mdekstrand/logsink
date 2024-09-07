@@ -3,7 +3,6 @@
 use std::fmt;
 use std::str::FromStr;
 
-use parse_display::FromStr;
 use serde::{Deserialize, Serialize};
 use smol_str::StrExt;
 use strum::{EnumIter, FromRepr, IntoEnumIterator};
@@ -14,9 +13,8 @@ use thiserror::Error;
 pub struct LevelParseError;
 
 /// Named log levels.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, FromRepr, FromStr)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, EnumIter, FromRepr)]
 #[repr(u8)]
-#[display(style = "UPPERCASE")]
 pub enum NamedLogLevel {
     Trace = 5,
     Debug5,
@@ -190,6 +188,29 @@ impl fmt::Display for NamedLogLevel {
             f.write_str(&txt.to_uppercase_smolstr())
         } else {
             f.write_str(txt)
+        }
+    }
+}
+
+impl FromStr for NamedLogLevel {
+    type Err = LevelParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_uppercase().as_str() {
+            "TRACE" | "TRC" => Ok(NamedLogLevel::Trace),
+            "DEBUG5" | "DBUG5" | "DB5" => Ok(NamedLogLevel::Debug5),
+            "DEBUG4" | "DBUG4" | "DB4" => Ok(NamedLogLevel::Debug4),
+            "DEBUG3" | "DBUG3" | "DB3" => Ok(NamedLogLevel::Debug3),
+            "DEBUG2" | "DBUG2" | "DB2" => Ok(NamedLogLevel::Debug2),
+            "DEBUG" | "DBG" => Ok(NamedLogLevel::Debug),
+            "INFO" | "INF" => Ok(NamedLogLevel::Info),
+            "NOTICE" => Ok(NamedLogLevel::Notice),
+            "WARN" | "WARNING" | "WRN" => Ok(NamedLogLevel::Warn),
+            "ERROR" | "ERR" => Ok(NamedLogLevel::Error),
+            "CRITICAL" | "CRIT" | "CRI" => Ok(NamedLogLevel::Critical),
+            "FATAL" | "FTL" => Ok(NamedLogLevel::Fatal),
+
+            _ => Err(LevelParseError),
         }
     }
 }

@@ -10,7 +10,7 @@ use std::path::PathBuf;
 use clap::Parser;
 use errors::SetupError;
 use paths::runtime_dir;
-use receivers::{fifo::open_fifo, suite::ReceiverSuite};
+use receivers::{fifo::make_fifo, suite::ReceiverSuite};
 use schema::level::LogLevel;
 use tokio::{sync::broadcast, task::JoinSet};
 
@@ -55,6 +55,9 @@ impl LogSinkCLI {
     fn run(&self) -> Result<(), SetupError> {
         let work = runtime_dir()?;
         let suite = self.open_suite()?;
+
+        println!("{}", serde_json::to_string(&suite.connection_info())?);
+
         Ok(())
     }
 
@@ -63,15 +66,15 @@ impl LogSinkCLI {
         let mut suite = ReceiverSuite::new();
 
         if self.listen_fifo {
-            let (fifo_path, fifo) = open_fifo(&work)?;
-            suite.listen_fifo_ndjson(&fifo_path, fifo);
+            let fifo_path = make_fifo(&work)?;
+            suite.listen_fifo_ndjson(&fifo_path);
         }
 
         Ok(suite)
     }
 
-    async fn pump_messages(&self, suite: ReceiverSuite) {
-        let (send, recv) = broadcast::channel(500);
-        let listen = suite.pump_messages(send);
-    }
+    // async fn pump_messages(&self, suite: ReceiverSuite) {
+    //     let (send, recv) = broadcast::channel(500);
+    //     let listen = suite.pump_messages(send);
+    // }
 }
