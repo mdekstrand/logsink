@@ -41,6 +41,9 @@ struct LogSinkCLI {
     background: bool,
 }
 
+// The main entry point.  Note that while we use Tokio, this is *not* decorated with
+// `tokio::main` — if the client has requested that we fork into the background, we
+// don't want to start up the Tokio runtime until *after* we fork.
 fn main() -> Result<(), SetupError> {
     let cli = LogSinkCLI::parse();
 
