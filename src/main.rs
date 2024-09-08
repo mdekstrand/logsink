@@ -54,14 +54,14 @@ fn main() -> Result<(), SetupError> {
 impl LogSinkCLI {
     fn run(&self) -> Result<(), SetupError> {
         let work = runtime_dir()?;
-        let suite = self.open_suite()?;
+        let suite = self.prepare_suite()?;
 
         println!("{}", serde_json::to_string(&suite.connection_info())?);
 
         Ok(())
     }
 
-    fn open_suite(&self) -> Result<ReceiverSuite, SetupError> {
+    fn prepare_suite(&self) -> Result<ReceiverSuite, SetupError> {
         let work = runtime_dir()?;
         let mut suite = ReceiverSuite::new();
 
